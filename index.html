@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vault</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#5b4bdb"><link rel="apple-touch-icon" href="icon-180.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#fbfbfa;--bg2:#f0efec;--fg:#232323;--mut:#7a7873;--bd:#dedcd7;--ac:#5b4bdb;--ac2:#e4e0ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1c1c1e;--bg2:#252527;--fg:#e6e4df;--mut:#98958d;--bd:#38383b;--ac:#a89bff;--ac2:#33305a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#1c1c1e;--bg2:#252527;--fg:#e6e4df;--mut:#98958d;--bd:#38383b;--ac:#a89bff;--ac2:#33305a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Ubuntu","Noto Sans",sans-serif}
+#app{display:flex;height:100%}
+aside{width:250px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex:none}
+.bar{display:flex;gap:6px;padding:10px}
+button,input,textarea{font:inherit;color:inherit}
+button{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+#q{flex:1;min-width:0;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 8px}
+#list{overflow:auto;flex:1;padding:0 6px 10px}
+.item{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 10px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item.on{background:var(--ac2)}
+.foot{padding:8px 10px;border-top:1px solid var(--bd);display:flex;gap:6px;flex-wrap:wrap}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bd)}
+#title{flex:1;min-width:0;border:0;background:none;font-size:20px;font-weight:650;padding:2px 0}
+#menu{display:none}
+.seg button{border-radius:0}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.seg .on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.panes{flex:1;display:flex;min-height:0}
+textarea{flex:1;min-width:0;border:0;resize:none;background:none;padding:18px 22px;font-family:ui-monospace,"Ubuntu Mono","DejaVu Sans Mono",Menlo,monospace;font-size:14px;line-height:1.65}
+#pv{flex:1;min-width:0;overflow:auto;padding:12px 26px 40px;font-family:Georgia,"DejaVu Serif",serif;font-size:16.5px;line-height:1.7}
+.split textarea{border-right:1px solid var(--bd)}
+.edit #pv,.view textarea{display:none}
+#pv h1,#pv h2,#pv h3{font-family:system-ui,sans-serif;line-height:1.25}
+#pv code{background:var(--bg2);padding:1px 5px;border-radius:4px;font-size:.88em}
+#pv pre{background:var(--bg2);padding:12px;border-radius:8px;overflow-x:auto}
+#pv pre code{padding:0}
+#pv blockquote{margin:.6em 0;padding:2px 14px;border-left:3px solid var(--ac);color:var(--mut)}
+#pv li.task{list-style:none;margin-left:-1.2em}
+a.wl{color:var(--ac);text-decoration:none;border-bottom:1px solid var(--ac)}
+a.wl.new{opacity:.6;border-bottom-style:dashed}
+#bl{border-top:1px solid var(--bd);padding:8px 14px;font-size:13px;color:var(--mut);max-height:90px;overflow:auto}
+#bl button{border:0;background:none;color:var(--ac);padding:0 8px 0 0;text-decoration:underline}
+dialog{width:min(760px,94vw);background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:10px;padding:12px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+canvas{width:100%;height:auto;display:block;cursor:pointer}
+@media (max-width:760px){
+ aside{position:fixed;inset:0 auto 0 0;z-index:5;transform:translateX(-100%);padding-top:env(safe-area-inset-top,0px);transition:transform .15s}
+ aside.open{transform:none}
+ #menu{display:inline-block}
+ .split .panes{flex-direction:column}.split textarea{border-right:0;border-bottom:1px solid var(--bd)}
+}
+@media (prefers-reduced-motion:reduce){aside{transition:none}}
+</style></head>
+<body>
+<div id="app">
+<aside id="side">
+ <div class="bar"><input id="q" type="search" placeholder="Search notes" aria-label="Search notes"><button id="new" title="New note">+ Note</button></div>
+ <div id="list"></div>
+ <div class="foot"><button id="graph">Graph view</button><button id="imp">Import .md</button><button id="sync">Sync</button><button id="setup">Drive setup</button><span id="st" style="flex-basis:100%;font-size:12px;color:var(--mut)"></span><input id="file" type="file" accept=".md,.txt,text/markdown,text/plain" multiple hidden></div>
+</aside>
+<main>
+ <div class="top">
+  <button id="menu" aria-label="Notes">☰</button>
+  <input id="title" aria-label="Note title">
+  <span class="seg"><button data-m="edit">Edit</button><button data-m="split">Split</button><button data-m="view">Read</button></span>
+  <button id="copy" title="Copy markdown">Copy</button>
+  <button id="del" title="Delete note">Delete</button>
+ </div>
+ <div class="panes split" id="panes"><textarea id="ed" spellcheck="false" aria-label="Markdown editor"></textarea><div id="pv"></div></div>
+ <div id="bl"></div>
+</main>
+</div>
+<dialog id="g"><canvas id="gc" width="720" height="480"></canvas><p style="margin:8px 0 0;color:var(--mut);font-size:13px">Click a note to open it. <button id="gx" style="float:right">Close</button></p></dialog>
+<script>
+const $=id=>document.getElementById(id),K='vault-notes-v1';
+let notes=[],tomb=[],cur=null,mode='split';
+try{notes=JSON.parse(localStorage.getItem(K)||'[]');tomb=JSON.parse(localStorage.getItem('vault-tomb')||'[]')}catch(e){}
+const uid=()=>Math.random().toString(36).slice(2,9);
+if(!notes.length){notes=[
+{id:'welcome',u:1,title:'Welcome',body:"# Welcome to Vault\n\nA small, local-first notebook. Notes are plain Markdown and live in this browser.\n\n- Link notes with double brackets: [[Linking notes]]\n- Links to missing notes appear dashed: [[Ideas]] (click to create it)\n- **Bold**, *italic*, `code`, lists, quotes and tasks all work\n\n> Backlinks show below the editor.\n\n- [x] Open Vault\n- [ ] Write something\n"},
+{id:'linking',u:1,title:'Linking notes',body:"# Linking notes\n\nType `[[Note title]]` to link. Use `[[Note title|label]]` to show different text.\n\nBack to [[Welcome]].\n"}]}
+const persist=()=>{try{localStorage.setItem(K,JSON.stringify(notes));localStorage.setItem('vault-tomb',JSON.stringify(tomb))}catch(e){}};
+const save=()=>{persist();sched()};
+const find=t=>notes.find(n=>n.title.toLowerCase()===t.trim().toLowerCase());
+const get=id=>notes.find(n=>n.id===id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const WL=/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+const linksOf=b=>[...b.matchAll(WL)].map(m=>m[1].trim());
+function inl(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>')
+ .replace(WL,(m,t,a)=>`<a href="#" class="wl${find(t)?'':' new'}" data-t="${t.trim().replace(/"/g,'&quot;')}">${a||t}</a>`)
+ .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\*([^*]+)\*/g,'<i>$1</i>')
+ .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')}
+function md(src){let o='',list=null,code=false,buf=[];
+ const close=()=>{if(list){o+=`</${list}>`;list=null}};
+ const li=(t,h)=>{if(list!==t){close();o+=`<${t}>`;list=t}o+=h};
+ for(const l of src.split('\n')){let m;
+  if(l.startsWith('```')){if(code){o+=`<pre><code>${esc(buf.join('\n'))}</code></pre>`;buf=[];code=false}else{close();code=true}continue}
+  if(code){buf.push(l);continue}
+  if(m=l.match(/^(#{1,6})\s+(.*)/)){close();o+=`<h${m[1].length}>${inl(m[2])}</h${m[1].length}>`}
+  else if(m=l.match(/^\s*[-*]\s+\[( |x)\]\s+(.*)/))li('ul',`<li class="task"><input type="checkbox" disabled ${m[1]==='x'?'checked':''}> ${inl(m[2])}</li>`);
+  else if(m=l.match(/^\s*[-*]\s+(.*)/))li('ul',`<li>${inl(m[1])}</li>`);
+  else if(m=l.match(/^\s*\d+\.\s+(.*)/))li('ol',`<li>${inl(m[1])}</li>`);
+  else if(m=l.match(/^>\s?(.*)/)){close();o+=`<blockquote>${inl(m[1])}</blockquote>`}
+  else if(/^---+$/.test(l)){close();o+='<hr>'}
+  else if(!l.trim())close();
+  else{close();o+=`<p>${inl(l)}</p>`}}
+ close();if(code)o+=`<pre><code>${esc(buf.join('\n'))}</code></pre>`;return o}
+function renderList(){const q=$('q').value.toLowerCase();
+ $('list').innerHTML='';
+ notes.filter(n=>!q||n.title.toLowerCase().includes(q)||n.body.toLowerCase().includes(q))
+  .sort((a,b)=>a.title.localeCompare(b.title)).forEach(n=>{const b=document.createElement('button');
+  b.className='item'+(n.id===cur?' on':'');b.textContent=n.title||'Untitled';b.onclick=()=>{open(n.id);$('side').classList.remove('open')};$('list').appendChild(b)})}
+function renderPv(){const n=get(cur);$('pv').innerHTML=md(n.body)}
+function renderBl(){const n=get(cur),t=n.title.toLowerCase();
+ const bl=notes.filter(x=>x.id!==cur&&linksOf(x.body).some(l=>l.toLowerCase()===t));
+ $('bl').innerHTML='Backlinks: ';
+ if(!bl.length)$('bl').append('none yet');
+ bl.forEach(x=>{const b=document.createElement('button');b.textContent=x.title;b.onclick=()=>open(x.id);$('bl').appendChild(b)})}
+function open(id){cur=id;const n=get(id);$('title').value=n.title;$('ed').value=n.body;renderList();renderPv();renderBl()}
+function setMode(m){mode=m;$('panes').className='panes '+m;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m))}
+function create(title,body){const n={id:uid(),u:Date.now(),title:title||'Untitled',body:body??`# ${title||'Untitled'}\n\n`};notes.push(n);save();open(n.id);return n}
+$('new').onclick=()=>{let t='Untitled',i=1;while(find(t))t='Untitled '+(++i);create(t);$('ed').focus()};
+$('ed').oninput=e=>{const n=get(cur);n.body=e.target.value;n.u=Date.now();save();renderPv();renderBl()};
+$('title').oninput=e=>{const n=get(cur);n.title=e.target.value;n.u=Date.now();save();renderList();renderBl()};
+$('q').oninput=renderList;
+$('pv').onclick=e=>{const a=e.target.closest('a.wl');if(!a)return;e.preventDefault();const t=a.dataset.t;const n=find(t);n?open(n.id):create(t)};
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$('menu').onclick=()=>$('side').classList.toggle('open');
+$('del').onclick=()=>{if(!confirm('Delete “'+get(cur).title+'”?'))return;tomb.push({id:cur,u:Date.now()});notes=notes.filter(n=>n.id!==cur);if(!notes.length)notes=[{id:uid(),u:Date.now(),title:'Untitled',body:''}];save();open(notes[0].id)};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(get(cur).body);$('copy').textContent='Copied'}catch(e){$('copy').textContent='Copy failed'}setTimeout(()=>$('copy').textContent='Copy',1200)};
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=async e=>{let last;for(const f of e.target.files){const body=await f.text();const title=f.name.replace(/\.(md|txt)$/i,'');const ex=find(title);if(ex){ex.body=body;ex.u=Date.now();last=ex}else{last=create(title,body)}}save();if(last)open(last.id);e.target.value=''};
+$('gx').onclick=()=>$('g').close();
+$('graph').onclick=()=>{$('g').showModal();const cv=$('gc'),c=cv.getContext('2d'),W=cv.width,H=cv.height,cs=getComputedStyle(document.documentElement);
+ const N=notes.map(n=>({n,x:W/2+(Math.random()-.5)*300,y:H/2+(Math.random()-.5)*200,vx:0,vy:0}));
+ const E=[];N.forEach(a=>linksOf(a.n.body).forEach(t=>{const b=N.find(x=>x.n.title.toLowerCase()===t.toLowerCase());if(b&&b!==a)E.push([a,b])}));
+ for(let k=0;k<300;k++){for(const a of N){for(const b of N){if(a===b)continue;let dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1,f=2600/(d*d);a.vx+=dx/d*f;a.vy+=dy/d*f}a.vx+=(W/2-a.x)*.01;a.vy+=(H/2-a.y)*.01}
+  for(const[a,b]of E){let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-110)*.02;a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f}
+  for(const a of N){a.x=Math.max(40,Math.min(W-40,a.x+a.vx*.5));a.y=Math.max(30,Math.min(H-30,a.y+a.vy*.5));a.vx*=.6;a.vy*=.6}}
+ c.clearRect(0,0,W,H);c.strokeStyle=cs.getPropertyValue('--bd').trim();c.lineWidth=1.5;
+ E.forEach(([a,b])=>{c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()});
+ c.font='13px system-ui,sans-serif';c.textAlign='center';
+ N.forEach(a=>{c.fillStyle=cs.getPropertyValue('--ac').trim();c.globalAlpha=a.n.id===cur?1:.7;c.beginPath();c.arc(a.x,a.y,a.n.id===cur?9:6,0,7);c.fill();c.globalAlpha=1;c.fillStyle=cs.getPropertyValue('--fg').trim();c.fillText(a.n.title,a.x,a.y+22)});
+ cv.onclick=e=>{const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;const h=N.find(a=>Math.hypot(a.x-x,a.y-y)<18);if(h){$('g').close();open(h.n.id)}}};
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();$('side').classList.add('open');$('q').focus()}});
+let tok=null,exp=0,syncing=false,timer;
+const st=t=>$('st').textContent=t,cid=()=>localStorage.getItem('vault-cid')||'',live=()=>tok&&Date.now()<exp;
+function gis(){return new Promise((res,rej)=>{if(window.google&&google.accounts)return res();const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=res;s.onerror=()=>rej(new Error('Can’t reach Google (offline?)'));document.head.appendChild(s)})}
+async function token(){if(live())return tok;await gis();return new Promise((res,rej)=>{google.accounts.oauth2.initTokenClient({client_id:cid(),scope:'https://www.googleapis.com/auth/drive.file',callback:r=>{if(r.error)return rej(new Error(r.error));tok=r.access_token;exp=Date.now()+(r.expires_in-60)*1000;res(tok)},error_callback:e=>rej(new Error(e.type||'Sign-in cancelled'))}).requestAccessToken()})}
+async function api(url,o={}){const r=await fetch(url,{...o,headers:{Authorization:'Bearer '+tok,...(o.headers||{})}});if(!r.ok)throw new Error('Drive error '+r.status);return r}
+function sched(){clearTimeout(timer);if(live())timer=setTimeout(()=>sync(false),4000)}
+function setup(){const v=prompt('Paste your Google OAuth Client ID:',cid());if(v===null)return;localStorage.setItem('vault-cid',v.trim());localStorage.removeItem('vault-fid');tok=null;if(v.trim())sync(true)}
+async function sync(interactive){if(syncing)return;if(!cid()){if(interactive)setup();return}
+ if(!live()&&!interactive){st('Press Sync to sign in');return}
+ syncing=true;try{st('Syncing…');await token();
+  let fid=localStorage.getItem('vault-fid');
+  if(!fid){const r=await(await api('https://www.googleapis.com/drive/v3/files?fields=files(id)&q='+encodeURIComponent("name='vault-notes.json' and trashed=false"))).json();fid=r.files[0]&&r.files[0].id}
+  let rem={notes:[],tomb:[]};
+  if(fid){try{rem=await(await api('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media')).json()}catch(e){if(String(e.message).includes('404'))fid=null;else throw e}}
+  const m=new Map();
+  [...(rem.notes||[]),...(rem.tomb||[]),...notes,...tomb].forEach(x=>{const p=m.get(x.id);if(!p||(x.u||0)>(p.u||0))m.set(x.id,x)});
+  const all=[...m.values()];notes=all.filter(x=>x.title!==undefined);tomb=all.filter(x=>x.title===undefined);
+  if(!notes.length)notes=[{id:uid(),u:Date.now(),title:'Untitled',body:''}];
+  const body=JSON.stringify({notes,tomb});
+  if(fid)await api('https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+  else{const b='vb'+uid();fid=(await(await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:`--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify({name:'vault-notes.json',mimeType:'application/json'})}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`})).json()).id}
+  localStorage.setItem('vault-fid',fid);persist();renderList();
+  const n=get(cur);if(n){if($('ed').value!==n.body)$('ed').value=n.body;$('title').value=n.title;renderPv();renderBl()}else open(notes[0].id);
+  st('Synced '+new Date().toLocaleTimeString())
+ }catch(e){st(e.message||'Sync failed')}finally{syncing=false}}
+$('sync').onclick=()=>sync(true);$('setup').onclick=setup;
+if(cid())gis().catch(()=>{});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+setMode('split');open(notes[0].id);
+</script>
+</body></html>
